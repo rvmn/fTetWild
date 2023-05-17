@@ -2608,7 +2608,7 @@ void floatTetWild::manifold_vertices(Mesh& mesh){
     }
 }
 
-void floatTetWild::get_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& F) {
+void floatTetWild::get_surface(const Mesh& mesh, std::vector<Vector3i>& b_faces, std::vector<int>& b_tags) {
     auto &tets = mesh.tets;
     auto &tet_vertices = mesh.tet_vertices;
 
@@ -2629,15 +2629,16 @@ void floatTetWild::get_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& 
     if (faces.empty())
         return;
     //
-    std::vector<std::array<int, 3>> b_faces;
     bool is_boundary = true;
-    for (int i = 0; i < faces.size() - 1; i++) {
-        if (std::make_tuple(faces[i][0], faces[i][1], faces[i][2])
+    for (int i = 0; i < faces.size(); i++) {
+        if (i < faces.size() - 1 &&
+            std::make_tuple(faces[i][0], faces[i][1], faces[i][2])
             == std::make_tuple(faces[i + 1][0], faces[i + 1][1], faces[i + 1][2])) {
             is_boundary = false;
         } else {
             if (is_boundary) {
-                b_faces.push_back({{faces[i][0], faces[i][1], faces[i][2]}});
+                b_tags.push_back(-tets[faces[i][3]].scalar);
+                b_faces.push_back(Vector3i(faces[i][0], faces[i][1], faces[i][2]));
                 bool is_inv = is_inverted(tet_vertices[tets[faces[i][3]][faces[i][4]]],
                                           tet_vertices[faces[i][0]],
                                           tet_vertices[faces[i][1]],
@@ -2648,16 +2649,15 @@ void floatTetWild::get_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& 
             is_boundary = true;
         }
     }
-    if (is_boundary) {
-        b_faces.push_back({{faces.back()[0], faces.back()[1], faces.back()[2]}});
-        bool is_inv = is_inverted(tet_vertices[tets[faces.back()[3]][faces.back()[4]]],
-                                  tet_vertices[faces.back()[0]],
-                                  tet_vertices[faces.back()[1]],
-                                  tet_vertices[faces.back()[2]]);
-        if(!is_inv)
-            std::swap(b_faces.back()[1], b_faces.back()[2]);
-    }
-    //
+}
+
+void floatTetWild::get_surface(const Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& F) {
+    auto &tet_vertices = mesh.tet_vertices;
+
+    std::vector<Vector3i> b_faces;
+    std::vector<int> b_tags;
+    get_surface(mesh, b_faces, b_tags);
+
     std::vector<int> b_v_ids;
     for (int i = 0; i < b_faces.size(); i++) {
         for (int j = 0; j < 3; j++) {
@@ -2666,7 +2666,6 @@ void floatTetWild::get_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& 
     }
     vector_unique(b_v_ids);
 
-    ///
     V.resize(b_v_ids.size(), 3);
     F.resize(b_faces.size(), 3);
     std::map<int, int> map_v_ids;

@@ -2637,7 +2637,7 @@ void floatTetWild::get_surface(const Mesh& mesh, std::vector<Vector3i>& b_faces,
             is_boundary = false;
         } else {
             if (is_boundary) {
-                b_tags.push_back(-tets[faces[i][3]].scalar);
+                b_tags.push_back(tets[faces[i][3]].scalar);
                 b_faces.push_back(Vector3i(faces[i][0], faces[i][1], faces[i][2]));
                 bool is_inv = is_inverted(tet_vertices[tets[faces[i][3]][faces[i][4]]],
                                           tet_vertices[faces[i][0]],

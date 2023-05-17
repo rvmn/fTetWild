@@ -30,10 +30,13 @@ class MshSaver {
         };
 
     public:
-        void save_mesh(const VectorF& nodes, const VectorI& elements, const VectorI& components, size_t dim, ElementType type);
+        void save_mesh(size_t dim, const VectorF& nodes,
+                       const VectorI& elements,    const VectorI& components,    ElementType type,
+                       const VectorI& sf_elements, const VectorI& sf_components, ElementType sf_type);
         void save_header();
         void save_nodes(const VectorF& nodes);
-        void save_elements(const VectorI& elements, const VectorI& components, ElementType type);
+        void save_elements(const VectorI& elements,    const VectorI& components,    ElementType type,
+                           const VectorI& sf_elements, const VectorI& sf_components, ElementType sf_type);
         void save_scalar_field(const std::string& fieldname, const VectorF& field);
         void save_vector_field(const std::string& fieldname, const VectorF& field);
         void save_elem_scalar_field(const std::string& fieldname, const VectorF& field);
@@ -53,6 +56,10 @@ class MshSaver {
         size_t m_dim;
 
         std::ofstream fout;
+
+    private:
+        void save_elements(const VectorI& elements, const VectorI& components, ElementType type,
+                           size_t nodes_per_element, size_t num_elements, size_t offset);
 };
 
 }

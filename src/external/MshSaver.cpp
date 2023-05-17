@@ -28,8 +28,9 @@ MshSaver::~MshSaver() {
     fout.close();
 }
 
-void MshSaver::save_mesh(const VectorF& nodes, const VectorI& elements, const VectorI& components,
-                         size_t dim, MshSaver::ElementType type) {
+void MshSaver::save_mesh(size_t dim, const VectorF& nodes,
+                         const VectorI& elements,    const VectorI& components,    ElementType type,
+                         const VectorI& sf_elements, const VectorI& sf_components, ElementType sf_type) {
     if (dim != 2 && dim != 3) {
         std::stringstream err_msg;
         err_msg << dim << "D mesh is not supported!" << std::endl;
@@ -39,7 +40,8 @@ void MshSaver::save_mesh(const VectorF& nodes, const VectorI& elements, const Ve
 
     save_header();
     save_nodes(nodes);
-    save_elements(elements, components,type);
+    save_elements(elements,    components,    type,
+                  sf_elements, sf_components, sf_type);
 }
 
 void MshSaver::save_header() {
@@ -92,73 +94,84 @@ void MshSaver::save_nodes(const VectorF& nodes) {
 }
 
 void MshSaver::save_elements(
-        const VectorI& elements, const VectorI& components, MshSaver::ElementType type) {
-    size_t nodes_per_element = 0;
-    switch (type) {
-        case TRI:
-            nodes_per_element = 3;
-            break;
-        case QUAD:
-            nodes_per_element = 4;
-            break;
-        case TET:
-            nodes_per_element = 4;
-            break;
-        case HEX:
-            nodes_per_element = 8;
-            break;
-        default:
-        {
-            std::stringstream err_msg;
-            err_msg << "Unsupported element type " << type;
-            throw ::PyMesh::NotImplementedError(err_msg.str());
+        const VectorI& elements,    const VectorI& components,    ElementType type,
+        const VectorI& sf_elements, const VectorI& sf_components, ElementType sf_type) {
+
+    auto no_nodes_in_element = [](ElementType type) {
+        switch (type) {
+            case TRI:
+                return 3;
+            case QUAD:
+                return 4;
+            case TET:
+                return 4;
+            case HEX:
+                return 8;
+            default:
+            {
+                std::stringstream err_msg;
+                err_msg << "Unsupported element type " << type;
+                throw ::PyMesh::NotImplementedError(err_msg.str());
+            }
         }
-    }
-    m_num_elements = elements.size() / nodes_per_element;
+    };
+
+    size_t nodes_per_element = no_nodes_in_element(type);
+    size_t nodes_per_sf_element = no_nodes_in_element(sf_type);
+
+    size_t num_elements = elements.size() / nodes_per_element;
+    size_t num_sf_elements = sf_elements.size() / nodes_per_sf_element;
+    m_num_elements = num_elements + num_sf_elements;
 
     // Save elements.
     fout << "$Elements" << std::endl;
     fout << m_num_elements << std::endl;
 
-    if (m_num_elements > 0) {
-        int elem_type = type;
-        int num_elems = m_num_elements;
-        int tags = components.size() > 0 ? 2 : 0;
-        if (!m_binary) {
-            for (size_t i=0; i<elements.size(); i+=nodes_per_element) {
-                int elem_num = i/nodes_per_element + 1;
-                VectorI elem = elements.segment(i, nodes_per_element) +
-                               VectorI::Ones(nodes_per_element);
+    save_elements(elements,    components,    type,    nodes_per_element,    num_elements,    0);
+    save_elements(sf_elements, sf_components, sf_type, nodes_per_sf_element, num_sf_elements, num_elements);
 
-                fout << elem_num << " " << elem_type << " " << tags << " ";
-                if(components.size() > 0)
-                    fout << components[elem_num-1] << " " << components[elem_num-1] << " ";
-
-                for (size_t j=0; j<nodes_per_element; j++) {
-                    fout << elem[j] << " ";
-                }
-                fout << std::endl;
-            }
-        } else {
-            fout.write((char*)&elem_type, sizeof(int));
-            fout.write((char*)&num_elems, sizeof(int));
-            fout.write((char*)&tags, sizeof(int));
-            for (size_t i=0; i<elements.size(); i+=nodes_per_element) {
-                int elem_num = i/nodes_per_element + 1;
-                VectorI elem = elements.segment(i, nodes_per_element) +
-                               VectorI::Ones(nodes_per_element);
-
-                fout.write((char*)&elem_num, sizeof(int));
-                if(components.size() > 0){
-                    std::array<int, 2> comps = {{components[elem_num-1], components[elem_num-1]}};
-                    fout.write((char*)comps.data(), sizeof(int) * 2);
-                }
-                fout.write((char*)elem.data(), sizeof(int)*nodes_per_element);
-            }
-        }
-    }
     fout << "$EndElements" << std::endl;
     fout.flush();
+}
+
+void MshSaver::save_elements(
+        const VectorI& elements, const VectorI& components, ElementType type,
+        size_t nodes_per_element, size_t num_elements, size_t offset) {
+    int elem_type = type;
+    int num_elems = num_elements;
+    int tags = components.size() > 0 ? 2 : 0;
+    if (!m_binary) {
+        for (size_t i=0; i<elements.size(); i+=nodes_per_element) {
+            int elem_num = i/nodes_per_element + 1;
+            VectorI elem = elements.segment(i, nodes_per_element) +
+                            VectorI::Ones(nodes_per_element);
+            int offset_elem_num = offset + elem_num;
+            fout << offset_elem_num << " " << elem_type << " " << tags << " ";
+            if(components.size() > 0)
+                fout << components[elem_num-1] << " " << components[elem_num-1] << " ";
+
+            for (size_t j=0; j<nodes_per_element; j++) {
+                fout << elem[j] << " ";
+            }
+            fout << std::endl;
+        }
+    } else {
+        fout.write((char*)&elem_type, sizeof(int));
+        fout.write((char*)&num_elems, sizeof(int));
+        fout.write((char*)&tags, sizeof(int));
+        for (size_t i=0; i<elements.size(); i+=nodes_per_element) {
+            int elem_num = i/nodes_per_element + 1;
+            VectorI elem = elements.segment(i, nodes_per_element) +
+                            VectorI::Ones(nodes_per_element);
+            int offset_elem_num = offset + elem_num;
+            fout.write((char*)&offset_elem_num, sizeof(int));
+            if(components.size() > 0){
+                std::array<int, 2> comps = {{components[elem_num-1], components[elem_num-1]}};
+                fout.write((char*)comps.data(), sizeof(int) * 2);
+            }
+            fout.write((char*)elem.data(), sizeof(int)*nodes_per_element);
+        }
+    }
 }
 
 void MshSaver::save_scalar_field(const std::string& fieldname, const VectorF& field) {

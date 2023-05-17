@@ -190,7 +190,28 @@ void write_mesh_aux(const std::string&              path,
             index++;
         }
 
-        mesh_saver.save_mesh(V_flat, T_flat, C_flat, 3, mesh_saver.TET);
+        std::vector<Vector3i> b_faces;
+        std::vector<int> b_tags;
+        get_surface(mesh, b_faces, b_tags);
+
+        PyMesh::VectorI t_flat(b_faces.size() * 3);
+        PyMesh::VectorI c_flat;
+
+        if(separate_components)
+            c_flat.resize(b_faces.size());
+
+        for (int i = 0; i < b_faces.size(); i++) {
+            t_flat[i * 3 + 0] = old_2_new[b_faces[i][0]];
+            t_flat[i * 3 + 1] = old_2_new[b_faces[i][1]];
+            t_flat[i * 3 + 2] = old_2_new[b_faces[i][2]];
+
+            if (separate_components)
+                c_flat[i] = b_tags[i];
+        }
+
+        mesh_saver.save_mesh(3, V_flat,
+                             T_flat, C_flat, mesh_saver.TET,
+                             t_flat, c_flat, mesh_saver.TRI);
 
         if (color.size() == mesh.tets.size()) {
             PyMesh::VectorF color_flat(cnt_t);

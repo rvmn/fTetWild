@@ -104,6 +104,9 @@ The inputs of our software are triangle surface meshes in `.off/.obj/.stl/.ply` 
 
 We support `.mesh/.msh` format output. The default output format is `.msh` with the elements' energy as the scalar field, which can be visualized by software [Gmsh](http://gmsh.info/). You can use `PyMesh::MshLoader` and `PyMesh::MshSaver` in `pymesh/` for read and write `.msh` meshes.
 
+| :warning: New extension adds boundary surface elementary entities and physical groups to the output `.msh` |
+|------------------------------------------------------------------------------------------------------------|
+| Tested with `./FloatTetwild_bin --level 0 --no-binary --no-color --csg csg_tree.json`                      |
 
 ### Features
 

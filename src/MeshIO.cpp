@@ -192,15 +192,17 @@ void write_mesh_aux(const std::string&              path,
 
         std::vector<Vector3i> b_faces;
         std::vector<int> b_tags;
-        get_surface(mesh, b_faces, b_tags);
+        std::vector<Scalar> b_colors;
+        get_surface(mesh, b_faces, b_tags, b_colors);
 
-        PyMesh::VectorI t_flat(b_faces.size() * 3);
+        int cnt_f = b_faces.size();
+        PyMesh::VectorI t_flat(cnt_f * 3);
         PyMesh::VectorI c_flat;
 
         if(separate_components)
-            c_flat.resize(b_faces.size());
+            c_flat.resize(cnt_f);
 
-        for (int i = 0; i < b_faces.size(); i++) {
+        for (int i = 0; i < cnt_f; i++) {
             t_flat[i * 3 + 0] = old_2_new[b_faces[i][0]];
             t_flat[i * 3 + 1] = old_2_new[b_faces[i][1]];
             t_flat[i * 3 + 2] = old_2_new[b_faces[i][2]];
@@ -213,13 +215,16 @@ void write_mesh_aux(const std::string&              path,
                              T_flat, C_flat, mesh_saver.TET,
                              t_flat, c_flat, mesh_saver.TRI);
 
-        if (color.size() == mesh.tets.size()) {
-            PyMesh::VectorF color_flat(cnt_t);
+        if (color.size() == mesh.tets.size() && b_colors.size() == cnt_f) {
+            PyMesh::VectorF color_flat(cnt_t + cnt_f);
             index = 0;
             for (const int i : t_ids) {
                 if (skip_tet(i))
                     continue;
                 color_flat[index++] = color[i];
+            }
+            for (int i = 0; i < cnt_f; i++) {
+                color_flat[index + i] = b_colors[i];
             }
             mesh_saver.save_elem_scalar_field("color", color_flat);
         }

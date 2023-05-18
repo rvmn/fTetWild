@@ -37,7 +37,7 @@ namespace floatTetWild {
     void mark_outside(Mesh& mesh, bool invert_faces = false);
     void smooth_open_boundary(Mesh& mesh, const AABBWrapper& tree);
     void smooth_open_boundary_aux(Mesh& mesh, const AABBWrapper& tree);
-    void get_surface(const Mesh& mesh, std::vector<Vector3i>& b_faces, std::vector<int>& b_tags);
+    void get_surface(const Mesh& mesh, std::vector<Vector3i>& b_faces, std::vector<int>& b_tags, std::vector<Scalar>& b_colors);
     void get_surface(const Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& F);
     void manifold_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::MatrixXi& F);
     void manifold_edges(Mesh& mesh);

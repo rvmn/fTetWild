@@ -78,7 +78,7 @@ namespace floatTetWild {
         for(int i = 0; i < meshes.size(); ++i)
         {
             const auto &m = meshes[i];
-            if (!MeshIO::load_mesh(m, Vs[i], Fs[i], tmp_mesh, tmp_tags)){
+            if (!MeshIO::load_mesh(m, Vs[i], Fs[i], tmp_mesh, tmp_tags, false)){
                 logger().error("unable to open {} file", m);
                 return false;
             }
@@ -105,7 +105,9 @@ namespace floatTetWild {
             for(const auto fid : ff)
                 F.push_back(Vector3i(fid(0)+offset, fid(1)+offset, fid(2)+offset));
 
-            tags.insert(tags.begin()+size, Fs[id].size(), id+1);
+            if(tags.size() == size)
+                tags.insert(tags.begin()+size, Fs[id].size(), id+1);
+
             size+=Fs[id].size();
             offset += Vs[id].size();
         }

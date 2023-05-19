@@ -259,7 +259,8 @@ bool MeshIO::load_mesh(const std::string&     path,
                        std::vector<Vector3>&  points,
                        std::vector<Vector3i>& faces,
                        GEO::Mesh&             input,
-                       std::vector<int>&      flags)
+                       std::vector<int>&      flags,
+                       const bool             reorder)
 {
     logger().debug("Loading mesh at {}...", path);
     igl::Timer timer;
@@ -292,7 +293,8 @@ bool MeshIO::load_mesh(const std::string&     path,
     // 		input.vertices.set_double_precision();
     // #endif
 
-    GEO::mesh_reorder(input, GEO::MESH_ORDER_MORTON);
+    if(reorder)
+        GEO::mesh_reorder(input, GEO::MESH_ORDER_MORTON);
 
     if (is_valid) {
         flags.clear();

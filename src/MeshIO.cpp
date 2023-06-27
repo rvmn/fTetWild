@@ -86,6 +86,7 @@ void write_mesh_aux(const std::string&              path,
                     const std::vector<Scalar>&      color,
                     const bool                      binary,
                     const bool                      separate_components,
+                    const bool                      sf_separate_components,
                     const std::function<bool(int)>& skip_tet,
                     const std::function<bool(int)>& skip_vertex)
 {
@@ -199,7 +200,7 @@ void write_mesh_aux(const std::string&              path,
         PyMesh::VectorI t_flat(cnt_f * 3);
         PyMesh::VectorI c_flat;
 
-        if(separate_components)
+        if(sf_separate_components)
             c_flat.resize(cnt_f);
 
         for (int i = 0; i < cnt_f; i++) {
@@ -207,7 +208,7 @@ void write_mesh_aux(const std::string&              path,
             t_flat[i * 3 + 1] = old_2_new[b_faces[i][1]];
             t_flat[i * 3 + 2] = old_2_new[b_faces[i][2]];
 
-            if (separate_components)
+            if (sf_separate_components)
                 c_flat[i] = b_tags[i];
         }
 
@@ -239,6 +240,18 @@ void write_mesh_aux(const std::string&              path,
             mesh_saver.save_scalar_field("color", color_flat);
         }
     }
+}
+
+void write_mesh_aux(const std::string&              path,
+                    const Mesh&                     mesh,
+                    const std::vector<int>&         t_ids,
+                    const std::vector<Scalar>&      color,
+                    const bool                      binary,
+                    const bool                      separate_components,
+                    const std::function<bool(int)>& skip_tet,
+                    const std::function<bool(int)>& skip_vertex)
+{
+    return write_mesh_aux(path, mesh, t_ids, color, binary, separate_components, false, skip_tet, skip_vertex);
 }
 }  // namespace
 
@@ -542,7 +555,8 @@ void MeshIO::write_mesh(const std::string&         path,
                         const bool                 only_interior,
                         const std::vector<Scalar>& color,
                         const bool                 binary,
-                        const bool                 separate_components)
+                        const bool                 separate_components,
+                        const bool                 sf_separate_components)
 {
     logger().info("Writing mesh to {}...", path);
     igl::Timer timer;
@@ -554,12 +568,12 @@ void MeshIO::write_mesh(const std::string&         path,
     if (only_interior) {
         const auto skip_tet    = [&mesh](const int i) { return mesh.tets[i].is_outside; };
         const auto skip_vertex = [&mesh](const int i) { return mesh.tet_vertices[i].is_outside; };
-        write_mesh_aux(path, mesh, t_ids, color, binary, separate_components, skip_tet, skip_vertex);
+        write_mesh_aux(path, mesh, t_ids, color, binary, separate_components, sf_separate_components, skip_tet, skip_vertex);
     }
     else {
         const auto skip_tet    = [&mesh](const int i) { return mesh.tets[i].is_removed; };
         const auto skip_vertex = [&mesh](const int i) { return mesh.tet_vertices[i].is_removed; };
-        write_mesh_aux(path, mesh, t_ids, color, binary, separate_components, skip_tet, skip_vertex);
+        write_mesh_aux(path, mesh, t_ids, color, binary, separate_components, sf_separate_components, skip_tet, skip_vertex);
     }
 
     timer.stop();

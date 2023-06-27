@@ -1387,7 +1387,7 @@ void floatTetWild::apply_coarsening(Mesh& mesh, AABBWrapper& tree) {
 #include <igl/remove_duplicate_vertices.h>
 #include <floattetwild/TriangleInsertion.h>
 void floatTetWild::get_tracked_surface(Mesh& mesh, Eigen::Matrix<Scalar, Eigen::Dynamic, 3> &V_sf, Eigen::Matrix<int, Eigen::Dynamic, 3> &F_sf, int c_id) {
-#define SF_CONDITION t.is_surface_fs[j]<=0&&t.surface_tags[j]==c_id
+#define SF_CONDITION t.is_surface_fs[j]<=0&&(t.surface_tags[j]==c_id||c_id==-1)
 
     auto &tets = mesh.tets;
     auto &tet_vertices = mesh.tet_vertices;

@@ -102,11 +102,16 @@ This command should show a list of fTetWild parameters.
 
 The inputs of our software are triangle surface meshes in `.off/.obj/.stl/.ply` format.
 
+| :warning: Other triangle surface mesh file formats supported by geogram may also work         |
+|-----------------------------------------------------------------------------------------------|
+| Thanks to Daniel Ward (@danielwardstfc), who found meshes in `.msh` format are also supported |
+
 We support `.mesh/.msh` format output. The default output format is `.msh` with the elements' energy as the scalar field, which can be visualized by software [Gmsh](http://gmsh.info/). You can use `PyMesh::MshLoader` and `PyMesh::MshSaver` in `pymesh/` for read and write `.msh` meshes.
 
-| :warning: New extension adds boundary surface elementary entities and physical groups to the output `.msh` |
-|------------------------------------------------------------------------------------------------------------|
-| Tested with `./FloatTetwild_bin --level 0 --no-binary --no-color --csg csg_tree.json`                      |
+| :new: Add boundary surface tags to the output `.msh` (one tag per facet, elementary entity = physical group) |
+|--------------------------------------------------------------------------------------------------------------|
+| `./FloatTetwild_bin --input input.stl --tag tag.txt`                                                         |
+| `./FloatTetwild_bin --csg csg_tree.json [--tag tag.txt]` (if no tag file, STL rank in CSG used instead)      |
 
 ### Features
 

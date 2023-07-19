@@ -79,7 +79,30 @@ jobs:
 
       - name: Run Example
         run: cd build; ./FloatTetwild_bin --input ../tests/bunny.off --level 0 --stop-energy 100
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: rc_fTetWild
+          path: build
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_name: fTetWild-${{ matrix.config.os }}
+          asset_path: build/
+          asset_content_type: application/octet-stream
   ####################
   # Windows
   ####################
@@ -161,3 +184,27 @@ jobs:
           cp C:\Miniconda\envs\__setup_conda\Library\bin\mpir.dll .\
           cp C:\Miniconda\envs\__setup_conda\Library\bin\gmp.dll .\
           .\FloatTetwild_bin.exe --input ..\tests\bunny.off --level 0  --stop-energy 200
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          name: rc_fTetWild
+          path: build/
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_name: fTetWild-${{ runner.os }}
+          asset_path: build/
+          asset_content_type: application/octet-stream

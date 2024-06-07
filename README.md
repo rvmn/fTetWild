@@ -1,6 +1,7 @@
 # Fast Tetrahedral Meshing in the Wild
 ![](./figs/1k.jpg)
 
+
 Yixin Hu, Teseo Schneider, Bolun Wang, Denis Zorin, Daniele Panozzo.
 ACM Transactions on Graphics (SIGGRAPH 2020)
 
